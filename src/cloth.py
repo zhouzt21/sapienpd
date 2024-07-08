@@ -8,10 +8,10 @@ import sapien
 import sapienpd
 from sapienpd.pd_config import PDConfig
 from sapienpd.pd_system import PDSystem
-from sapienpd.pd_component import PDPlaneComponent, PDClothComponent
+from sapienpd.pd_component import  PDClothComponent, PDBodyComponent  #  PDPlaneComponent,
 from sapienpd.utils.array import wp_slice
 from sapienpd.utils.logger import sapienpd_logger as logger
-
+from sapienpd.pd_defs import ShapeTypes
 
 logger.setLevel("DEBUG")
 
@@ -31,10 +31,14 @@ def init_camera(scene: sapien.Scene):
 
 
 def init_ground(scene: sapien.Scene):
-    ground_comp = PDPlaneComponent(
-        normal=np.array([1, 0, 0], dtype=np.float32), 
-        offset=0.0, 
-        friction=0.1
+    # ground_comp = PDPlaneComponent(
+    #     normal=np.array([1, 0, 0], dtype=np.float32), 
+    #     offset=0.0, 
+    #     friction=0.1
+    # )
+    ground_comp = PDBodyComponent(
+        shape_types=[ShapeTypes.GEO_PLANE],
+        frictions=[0.5],
     )
     ground_render = sapien.render.RenderBodyComponent()
     ground_render.attach(
@@ -53,7 +57,11 @@ def init_ground(scene: sapien.Scene):
 
 
 def init_cloth(scene: sapien.Scene):
-    cloth_path = os.path.join(os.path.dirname(__file__), "../assets/cloth_51.obj")
+    # cloth_path = os.path.join(os.path.dirname(__file__), "../assets/cloth_51.obj")
+    # cloth_path = os.path.join(os.path.dirname(__file__), "assets/trouser_chair1.obj")
+    # cloth_path = os.path.join(os.path.dirname(__file__), "assets/trouser_cube.obj")
+    cloth_path = os.path.join(os.path.dirname(__file__), "assets/trouser_sofa.obj")
+
     vertices, faces = igl.read_triangle_mesh(cloth_path)
     cloth_comp = PDClothComponent(
         vertices,

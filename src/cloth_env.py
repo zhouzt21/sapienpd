@@ -18,6 +18,9 @@ from sapienpd.pd_config import PDConfig
 from sapienpd.pd_defs import ShapeTypes
 from sapienpd.pd_system import PDSystem
 
+import sapienpd
+import os
+import igl
 # pip install https://github.com/fbxiang/mesh2nvdb/releases/download/nightly/mesh2nvdb-0.1-cp36-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
 # pip install git+https://github.com/Rabbit-Hu/sapienpd
 
@@ -68,10 +71,12 @@ class PickClothEnv(BaseEnv):
         *args,
         robot_uids="panda",
         fem_cfg: FEMConfig | dict = FEMConfig(),
-        interaction_links=("panda_rightfinger", "panda_leftfinger"),
+        interaction_links=("panda_rightfinger", "panda_leftfinger","panda_link7",
+                           "panda_link6","panda_link5","panda_link4","panda_link3",
+                           "panda_link2","panda_link1","panda_link0"), 
         cloth_size=(0.2, 0.2),
-        cloth_resolution=(51, 51),
-        cloth_init_pose=sapien.Pose([0.0, -0.1, 0.1]),
+        cloth_resolution=(21,21), #(51, 51),
+        cloth_init_pose=sapien.Pose([-0.1, -0.1, 1.2]),
         robot_init_qpos_noise=0,
         **kwargs,
     ):
@@ -94,6 +99,17 @@ class PickClothEnv(BaseEnv):
 
     def _setup_scene(self):
         super()._setup_scene()
+
+        near, far = 0.1, 100
+        width, height = 640, 480
+        camera = self._scene.sub_scenes[0].add_camera('main_camera', 
+                                            width=width,
+                                            height=height,
+                                            fovy=np.deg2rad(35),
+                                            near=near,
+                                            far=far,
+                                            ) 
+        camera.set_pose(sapien.Pose([0.3, 0, 0.6], [0, 0, 0, 1]))
 
         self._pd_config = PDConfig()
         self._pd_config.max_particles = self._fem_cfg.max_particles
@@ -165,6 +181,8 @@ class PickClothEnv(BaseEnv):
         self.set_pd_state_dict(self.pd_init_state)
 
     def _after_reconfigure(self, options):
+        # cloth_path = os.path.join(os.path.dirname(__file__), "assets/trouser_cube.obj")
+        # vertices, faces = igl.read_triangle_mesh(cloth_path)
         vertices, faces = gen_grid_cloth(size=self.cloth_size, resolution=self.cloth_resolution)
 
         cloth_comp = PDClothComponent(
@@ -230,12 +248,13 @@ def main():
     env = PickClothEnv(render_mode="human", control_mode="pd_joint_pos")
     num_trajs = 0
     seed = 0
-    env.reset(seed=seed)
-    env._setup_scene()
-    cam = init_camera(self._scene.sub_scenes[0])
-    env._load_scene()
-    env._after_reconfigure()  
-    env.render_human()
+    env.reset(seed=seed)       
+
+    # while True:
+    #     env.render()
+    #     env.viewer.paused = True
+    #     env.step(None)
+
 
     while True:
         print(f"Collecting trajectory {num_trajs + 1}, seed={seed}")
